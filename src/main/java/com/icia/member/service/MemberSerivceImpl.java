@@ -1,0 +1,67 @@
+package com.icia.member.service;
+
+import com.icia.member.dto.MemberDetailDTO;
+import com.icia.member.dto.MemberLoginDTO;
+import com.icia.member.dto.MemberSaveDTO;
+import com.icia.member.entity.MemberEntity;
+import com.icia.member.repository.MemberRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+@RequiredArgsConstructor
+public class MemberSerivceImpl implements MemberService {
+    private final MemberRepository mr;
+
+    @Override
+    public Long save(MemberSaveDTO memberSaveDTO) {
+        // JpaRepository는 무조건 Entity만 받는다.
+
+        // MemberSaveDTO-> MemberEntity
+        MemberEntity memberEntity = MemberEntity.saveMember(memberSaveDTO);
+//        Long memberId = mr.save(memberEntity).getId();
+//        return memberId;
+        return mr.save(memberEntity).getId();
+    }
+
+    @Override
+    public boolean login(MemberLoginDTO memberLoginDTO) {
+        MemberEntity memberEntity = mr.findByMemberEmail(memberLoginDTO.getMemberEmail());
+        if (memberEntity != null) {
+            if (memberEntity.getMemberPassword().equals(memberLoginDTO.getMemberPassword())) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public List<MemberDetailDTO> findAll() {
+        List<MemberEntity> memberEntityList = mr.findAll(); //jpa형식
+        List<MemberDetailDTO> memberList = new ArrayList<>();
+        for(MemberEntity m: memberEntityList){
+            memberList.add(MemberDetailDTO.toMemberDetailDTO(m));
+        }
+        return memberList;
+    }
+
+    @Override
+    public MemberDetailDTO findById(Long memberId) {
+        Optional<MemberEntity> memberEntityOptional = mr.findById(memberId);
+        //Optional 객체, null을 방지하기위해
+        MemberEntity memberEntity = memberEntityOptional.get();// isEmpty 값의 있는지 없는지
+        // entity -> dto 변환
+        MemberDetailDTO memberDetailDTO = MemberDetailDTO.toMemberDetailDTO(memberEntity);
+        return memberDetailDTO;
+
+//        위의 내용을압축해서 하면 아래와같다
+//        return MemberDetailDTO.toMemberDetailDTO(mr.findById(memberId).get());
+    }
+}
